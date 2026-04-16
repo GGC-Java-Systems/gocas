@@ -49,51 +49,69 @@ public class ExportDeedOfMortgage {
             logwrapr.severe(poGRider.getErrMsg());
             logwrapr.severe("GRiderX has error...");
             System.exit(1);
-        }        
-        
-        String lsSQL = "SELECT" +
-                            "  b.sCompnyNm" +
-                            ", IFNULL(c.sCompnyNm, '') sSpouseNm" +
-                            ", TRIM(CONCAT(b.sHouseNox, ' ', b.sAddressx, ', ', d.sTownName, ' ', e.sProvName)) sAddressx" +
-                            ", IFNULL(f.sCompnyNm, '') sCoMaker1" +
-                            ", IFNULL(g.sCompnyNm, '') sCoMaker2" +
-                            ", a.sAcctNmbr" +
-                            ", j.sBrandNme" +
-                            ", i.sModelNme" +
-                            ", h.sEngineNo" +
-                            ", h.sFrameNox" +
-                            ", k.sColorNme" +
-                            ", IFNULL(h.sFileNoxx, '') sFileNoxx" +
-                            ", IFNULL(h.sRegORNox, '') sRegORNox" +
-                            ", a.nGrossPrc" +
-                            ", a.nDownPaym" +
-                            ", a.nPNValuex" +
-                            ", a.nAcctTerm" +
-                            ", a.dDueDatex" +
-                            ", a.nMonAmort" +
-                            ", a.nRebatesx" +
-                        " FROM MC_AR_Master a" +
-                                " LEFT JOIN Client_Master f ON a.sCoCltID1 = f.sClientID" +
-                                " LEFT JOIN Client_Master g ON a.sCoCltID2 = g.sClientID" +
-                                " LEFT JOIN MC_Serial h ON a.sSerialID = h.sSerialID" +
-                                " LEFT JOIN MC_Model i ON h.sModelIDx = i.sModelIDx" +
-                                " LEFT JOIN Brand j ON i.sBrandIDx = j.sBrandIDx" +
-                                " LEFT JOIN Color k ON h.sColorIDx = k.sColorIDx" +
-                            ", Client_Master b" +
-                                " LEFT JOIN Client_Master c ON b.sSpouseID = c.sClientID" +
-                                " LEFT JOIN TownCity d ON b.sTownIDxx = d.sTownIDxx" +
-                                " LEFT JOIN Province e ON d.sProvIDxx = e.sProvIDxx" +
-                        " WHERE a.sClientID = b.sClientID" +
-                            " AND a.sAcctNmbr = " + SQLUtil.toSQL(args[0]);
-        
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        
-        if (MiscUtil.RecordCount(loRS) <= 0){
-            logwrapr.severe("No record found...");
-            System.exit(1);
-        }
-        
+        }      
+                
         try {
+            String lsSQL = "SELECT" +
+                                "  a.sClientNm" +
+                                ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
+                                ", a.sTransNox" +
+                                ", b.sAcctNmbr" +
+                            " FROM Credit_Online_Application a" +
+                                ", MC_AR_Contract_Info b" +
+                            " WHERE a.sTransNox = b. sReferNox" +
+                                " AND b.sTransNox = " + SQLUtil.toSQL(args[0]);
+
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+            if (MiscUtil.RecordCount(loRS) <= 0) {
+                logwrapr.severe("No record found...");
+                System.exit(1);
+            }
+
+            loRS.next();
+            lsSQL = "SELECT" +
+                        "  b.sCompnyNm" +
+                        ", IFNULL(c.sCompnyNm, '') sSpouseNm" +
+                        ", TRIM(CONCAT(b.sHouseNox, ' ', b.sAddressx, ', ', d.sTownName, ' ', e.sProvName)) sAddressx" +
+                        ", IFNULL(f.sCompnyNm, '') sCoMaker1" +
+                        ", IFNULL(g.sCompnyNm, '') sCoMaker2" +
+                        ", a.sAcctNmbr" +
+                        ", j.sBrandNme" +
+                        ", i.sModelNme" +
+                        ", h.sEngineNo" +
+                        ", h.sFrameNox" +
+                        ", k.sColorNme" +
+                        ", IFNULL(h.sFileNoxx, '') sFileNoxx" +
+                        ", IFNULL(h.sRegORNox, '') sRegORNox" +
+                        ", a.nGrossPrc" +
+                        ", a.nDownPaym" +
+                        ", a.nPNValuex" +
+                        ", a.nAcctTerm" +
+                        ", a.dDueDatex" +
+                        ", a.nMonAmort" +
+                        ", a.nRebatesx" +
+                    " FROM MC_AR_Master a" +
+                            " LEFT JOIN Client_Master f ON a.sCoCltID1 = f.sClientID" +
+                            " LEFT JOIN Client_Master g ON a.sCoCltID2 = g.sClientID" +
+                            " LEFT JOIN MC_Serial h ON a.sSerialID = h.sSerialID" +
+                            " LEFT JOIN MC_Model i ON h.sModelIDx = i.sModelIDx" +
+                            " LEFT JOIN Brand j ON i.sBrandIDx = j.sBrandIDx" +
+                            " LEFT JOIN Color k ON h.sColorIDx = k.sColorIDx" +
+                        ", Client_Master b" +
+                            " LEFT JOIN Client_Master c ON b.sSpouseID = c.sClientID" +
+                            " LEFT JOIN TownCity d ON b.sTownIDxx = d.sTownIDxx" +
+                            " LEFT JOIN Province e ON d.sProvIDxx = e.sProvIDxx" +
+                    " WHERE a.sClientID = b.sClientID" +
+                        " AND a.sAcctNmbr = " + SQLUtil.toSQL(loRS.getString("sAcctNmbr"));
+
+            loRS = poGRider.executeQuery(lsSQL);
+
+            if (MiscUtil.RecordCount(loRS) <= 0){
+                logwrapr.severe("No record found...");
+                System.exit(1);
+            }
+            
             if (loRS.next()){
                 // Load your template with form fields
                 String lsTemplate = "Deed of Sale with Mortgage";

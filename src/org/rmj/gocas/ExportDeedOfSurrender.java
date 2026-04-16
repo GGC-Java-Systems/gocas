@@ -46,35 +46,53 @@ public class ExportDeedOfSurrender {
             System.exit(1);
         }        
         
-        String lsSQL = "SELECT" +
-                            "  d.sBrandNme" +
-                            ", c.sModelNme" +
-                            ", b.sEngineNo" +
-                            ", b.sFrameNox" +
-                            ", e.sColorNme" +
-                            ", f.sLastName" +
-                            ", f.sFrstName" +
-                            ", f.sMiddName" +
-                            ", f.sSuffixNm" +
-                            ", a.sAcctNmbr" +
-                            ", f.sCompnyNm" +
-                        " FROM MC_AR_Master a" +
-                            " LEFT JOIN MC_Serial b ON a.sSerialID = b.sSerialID" +
-                            " LEFT JOIN MC_Model c ON b.sModelIDx = c.sModelIDx" +
-                            " LEFT JOIN Brand d ON c.sBrandIDx = d.sBrandIDx" +
-                            " LEFT JOIN Color e ON b.sColorIDx = e.sColorIDx" +
-                            ", Client_Master f" +
-                        " WHERE a.sClientID = f.sClientID" +
-                            " AND a.sAcctNmbr = " + SQLUtil.toSQL(args[0]);
-        
-        ResultSet loRS = poGRider.executeQuery(lsSQL);
-        
-        if (MiscUtil.RecordCount(loRS) <= 0){
-            logwrapr.severe("No record found...");
-            System.exit(1);
-        }
-        
         try {
+            String lsSQL = "SELECT" +
+                            "  a.sClientNm" +
+                            ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
+                            ", a.sTransNox" +
+                            ", b.sAcctNmbr" +
+                        " FROM Credit_Online_Application a" +
+                            ", MC_AR_Contract_Info b" +
+                        " WHERE a.sTransNox = b. sReferNox" +
+                            " AND b.sTransNox = " + SQLUtil.toSQL(args[0]);
+
+            ResultSet loRS = poGRider.executeQuery(lsSQL);
+
+            if (MiscUtil.RecordCount(loRS) <= 0) {
+                logwrapr.severe("No record found...");
+                System.exit(1);
+            }
+ 
+            loRS.next();
+            lsSQL = "SELECT" +
+                        "  d.sBrandNme" +
+                        ", c.sModelNme" +
+                        ", b.sEngineNo" +
+                        ", b.sFrameNox" +
+                        ", e.sColorNme" +
+                        ", f.sLastName" +
+                        ", f.sFrstName" +
+                        ", f.sMiddName" +
+                        ", f.sSuffixNm" +
+                        ", a.sAcctNmbr" +
+                        ", f.sCompnyNm" +
+                    " FROM MC_AR_Master a" +
+                        " LEFT JOIN MC_Serial b ON a.sSerialID = b.sSerialID" +
+                        " LEFT JOIN MC_Model c ON b.sModelIDx = c.sModelIDx" +
+                        " LEFT JOIN Brand d ON c.sBrandIDx = d.sBrandIDx" +
+                        " LEFT JOIN Color e ON b.sColorIDx = e.sColorIDx" +
+                        ", Client_Master f" +
+                    " WHERE a.sClientID = f.sClientID" +
+                        " AND a.sAcctNmbr = " + SQLUtil.toSQL(loRS.getString("sAcctNmbr"));
+
+            loRS = poGRider.executeQuery(lsSQL);
+
+            if (MiscUtil.RecordCount(loRS) <= 0){
+                logwrapr.severe("No record found...");
+                System.exit(1);
+            }
+            
             if (loRS.next()){
                 // Load your template with form fields
                 String lsTemplate = "Deed of Voluntary Surrender";

@@ -89,11 +89,13 @@ public class ExportGOCASForm {
             }
 
             lsSQL = "SELECT" +
-                        "  sClientNm" +
-                        ", IFNULL(sCatInfox, sDetlInfo) sDetlInfo" +
-                        ", sTransNox" +
-                    " FROM Credit_Online_Application" +
-                    " WHERE sTransNox = " + SQLUtil.toSQL(lsSQL);
+                        "  a.sClientNm" +
+                        ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
+                        ", a.sTransNox" +
+                    " FROM Credit_Online_Application a" +
+                        ", MC_AR_Contract_Info b" +
+                    " WHERE a.sTransNox = b. sReferNox" +
+                        " AND b.sTransNox = " + SQLUtil.toSQL(lsSQL);
 
             loRS = poGRider.executeQuery(lsSQL);
 
