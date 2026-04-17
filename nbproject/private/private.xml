@@ -18,6 +18,13 @@
             <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/src/org/rmj/gocas/GOCASApplication.java</file>
             <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/src/org/rmj/gocas/ExportGOCASForm.java</file>
         </group>
-        <group name="GCARD"/>
+        <group name="GCARD">
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/test/testUpdateARContract.java</file>
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/test/testExportGOCAS.java</file>
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/src/org/rmj/gocas/ARContractUpdate.java</file>
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/test/testGOCAS.java</file>
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/src/org/rmj/gocas/DownloadARContract.java</file>
+            <file>file:/D:/Guanzon/GMC%20SEG%20Folder%20-%20Java/gocas/src/org/rmj/gocas/ExportGOCASForm.java</file>
+        </group>
     </open-files>
 </project-private>
