@@ -54,40 +54,32 @@ public class ExportChattelMortgage {
                                 "  a.sClientNm" +
                                 ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
                                 ", a.sTransNox" +
+                                ", c.sEngineNo" +
+                                ", c.sFrameNox" +
                                 ", b.sAcctNmbr" +
+                                ", b.nDownPaym" +
+                                ", b.nAcctTerm" +
+                                ", b.nMonAmort" +
+                                ", b.nRebatesx" +
+                                ", b.nPNValuex" +
+                                ", b.nPenaltyx" +
+                                ", IFNULL(b.dFirstPay, '') dFirstPay" +
+                                ", e.sBrandNme" +
+                                ", CONCAT(d.sModelNme, ' - ', d.sModelCde) sModelNme" +
+                                ", f.sColorNme" +
+                                ", IFNULL(b.sTransNox, '') xTransNox" +
+                                ", a.sClientNm" +
                             " FROM Credit_Online_Application a" +
-                                ", MC_AR_Contract_Info b" +
-                            " WHERE a.sTransNox = b. sReferNox" +
-                                " AND b.sTransNox = " + SQLUtil.toSQL(args[0]);
+                                " LEFT JOIN MC_AR_Contract_Info b ON a.sTransNox = b.sReferNox" +
+                                " LEFT JOIN MC_Serial c ON b.sSerialID = c.sSerialID" +
+                                " LEFT JOIN MC_Model d ON c.sModelIDx = d.sModelIDx" +
+                                " LEFT JOIN Brand e ON d.sBrandIDx = e.sBrandIDx" +
+                                " LEFT JOIN Color f ON c.sColorIDx = f.sColorIDx" +
+                            " WHERE b.sTransNox = " + SQLUtil.toSQL(args[0]);
 
             ResultSet loRS = poGRider.executeQuery(lsSQL);
 
             if (MiscUtil.RecordCount(loRS) <= 0) {
-                logwrapr.severe("No record found...");
-                System.exit(1);
-            }
-
-            loRS.next();
-            lsSQL = "SELECT" +
-                                "  b.sCompnyNm" +
-                                ", IFNULL(c.sCompnyNm, '') sSpouseNm" +
-                                ", TRIM(CONCAT(b.sHouseNox, ' ', b.sAddressx, ', ', d.sTownName, ' ', e.sProvName)) sAddressx" +
-                                ", IFNULL(f.sCompnyNm, '') sCoMaker1" +
-                                ", IFNULL(g.sCompnyNm, '') sCoMaker2" +
-                                ", a.sAcctNmbr" +
-                            " FROM MC_AR_Master a" +
-                                    " LEFT JOIN Client_Master f ON a.sCoCltID1 = f.sClientID" +
-                                    " LEFT JOIN Client_Master g ON a.sCoCltID2 = g.sClientID" +
-                                ", Client_Master b" +
-                                    " LEFT JOIN Client_Master c ON b.sSpouseID = c.sClientID" +
-                                    " LEFT JOIN TownCity d ON b.sTownIDxx = d.sTownIDxx" +
-                                    " LEFT JOIN Province e ON d.sProvIDxx = e.sProvIDxx" +
-                            " WHERE a.sClientID = b.sClientID" +
-                                " AND a.sAcctNmbr = " + SQLUtil.toSQL(loRS.getString("sAcctNmbr"));
-
-            loRS = poGRider.executeQuery(lsSQL);
-
-            if (MiscUtil.RecordCount(loRS) <= 0){
                 logwrapr.severe("No record found...");
                 System.exit(1);
             }
@@ -106,7 +98,7 @@ public class ExportChattelMortgage {
                 
                 // Output PDF path
                 lsTemplate = lsTemplate + " - " + 
-                            loRS.getString("sCompnyNm").toUpperCase() + " - " +
+                            loRS.getString("sClientNm").toUpperCase() + " - " +
                             loRS.getString("sAcctNmbr");
                 PdfStamper stamper = new PdfStamper(reader, new FileOutputStream(path + "docusign/" + lsTemplate + ".pdf"));
                 
@@ -121,11 +113,24 @@ public class ExportChattelMortgage {
                 int day = date.getDayOfMonth();
                 String dayWithSuffix = day + getDaySuffix(day);
                 
-                form.setField("day", dayWithSuffix.toUpperCase());
-                form.setField("monthYear", monthName.toUpperCase() + " " + date.getYear());
+//                form.setField("day", dayWithSuffix.toUpperCase());
+//                form.setField("monthYear", monthName.toUpperCase() + " " + date.getYear());
+
+                GOCASApplication gocas = new GOCASApplication();
+                gocas.setData(loRS.getString("sDetlInfo"));
                 
-                form.setField("buyerName", loRS.getString("sCompnyNm").toUpperCase());
-                form.setField("marriedTo", loRS.getString("sSpouseNm").toUpperCase());
+                //spouse name
+                String lsValue = gocas.SpouseInfo().PersonalInfo().getLastName() + ", " + gocas.SpouseInfo().PersonalInfo().getFirstName();
+                if (!gocas.SpouseInfo().PersonalInfo().getSuffixName().isEmpty()){
+                    lsValue += " " + gocas.SpouseInfo().PersonalInfo().getSuffixName();
+                }
+                if (!gocas.SpouseInfo().PersonalInfo().getMiddleName().isEmpty()){
+                    lsValue += " " + gocas.SpouseInfo().PersonalInfo().getMiddleName();
+                }
+                form.setField("buyerSpouse", lsValue.toUpperCase());
+                
+                form.setField("buyerName", loRS.getString("sClientNm").toUpperCase());
+                form.setField("marriedTo", lsValue);
                 form.setField("buyerAddress", loRS.getString("sAddressx").toUpperCase());
                 form.setField("MORTGAGOR", loRS.getString("sCompnyNm").toUpperCase());
                 form.setField("COMAKER", loRS.getString("sCoMaker1").toUpperCase());

@@ -70,32 +70,29 @@ public class ExportGOCASForm {
             String lsSQL = args[0];
             ResultSet loRS;
 
-            if (lsSQL.length() == 10){
-                lsSQL = "SELECT" +
-                            " b.sReferNox sTransNox" +
-                        " FROM MC_AR_Master a" +
-                            ", MC_Credit_Application b" +
-                        " WHERE a.sApplicNo = b.sTransNox" +
-                            " AND a.sAcctNmbr = " + SQLUtil.toSQL(lsSQL);
-
-                loRS = poGRider.executeQuery(lsSQL);
-
-                if (!loRS.next()){
-                    logwrapr.severe("No record found...");
-                    System.exit(1);
-                }
-                
-                lsSQL = loRS.getString("sTransNox");
-            }
-
             lsSQL = "SELECT" +
                         "  a.sClientNm" +
                         ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
                         ", a.sTransNox" +
+                        ", c.sEngineNo" +
+                        ", c.sFrameNox" +
+                        ", b.nDownPaym" +
+                        ", b.nAcctTerm" +
+                        ", b.nMonAmort" +
+                        ", b.nRebatesx" +
+                        ", b.nPNValuex" +
+                        ", b.nPenaltyx" +
+                        ", IFNULL(b.dFirstPay, '') dFirstPay" +
+                        ", CONCAT(e.sBrandNme, ' ', d.sModelNme, ' - ', d.sModelCde) sModelNme" +
+                        ", f.sColorNme" +
+                        ", IFNULL(b.sTransNox, '') xTransNox" + 
                     " FROM Credit_Online_Application a" +
-                        ", MC_AR_Contract_Info b" +
-                    " WHERE a.sTransNox = b. sReferNox" +
-                        " AND b.sTransNox = " + SQLUtil.toSQL(lsSQL);
+                        " LEFT JOIN MC_AR_Contract_Info b ON a.sTransNox = b.sReferNox" +
+                        " LEFT JOIN MC_Serial c ON b.sSerialID = c.sSerialID" +
+                        " LEFT JOIN MC_Model d ON c.sModelIDx = d.sModelIDx" +
+                        " LEFT JOIN Brand e ON d.sBrandIDx = e.sBrandIDx" +
+                        " LEFT JOIN Color f ON c.sColorIDx = f.sColorIDx" +
+                    " WHERE b.sTransNox = " + SQLUtil.toSQL(lsSQL);
 
             loRS = poGRider.executeQuery(lsSQL);
 
@@ -105,6 +102,22 @@ public class ExportGOCASForm {
             }
             
             if (loRS.next()){
+                String lsModelNme = "";
+                String lsTermName = "";
+                double lnMonAmort = 0.00;
+                double lnDownPaym = 0.00;
+                double lnRebatexx = 0.00;
+                double lnPNValuex = 0.00;
+                
+                if (!loRS.getString("xTransNox").isEmpty()){
+                    lsModelNme = loRS.getString("sModelNme");
+                    lsTermName = loRS.getString("nAcctTerm");
+                    lnMonAmort = loRS.getDouble("nMonAmort");
+                    lnDownPaym = loRS.getDouble("nDownPaym");
+                    lnRebatexx = loRS.getDouble("nRebatesx");
+                    lnPNValuex = loRS.getDouble("nPNValuex");
+                }
+                
                 GOCASApplication gocas = new GOCASApplication();
                 gocas.setData(loRS.getString("sDetlInfo"));
                 
@@ -160,22 +173,27 @@ public class ExportGOCASForm {
                 ResultSet loRSx;
 
                 //brand/model
-                lsSQL = "SELECT sBrandNme FROM Brand WHERE sBrandIDx = " + SQLUtil.toSQL(gocas.PurchaseInfo().getBrandName());
-                loRSx = poGRider.executeQuery(lsSQL);
-                if (loRSx.next()){
-                    lsValue = loRSx.getString("sBrandNme");
-                }
-                
-                lsSQL = "SELECT sModelNme FROM MC_Model WHERE sModelIDx = " + SQLUtil.toSQL(gocas.PurchaseInfo().getModelID());
-                loRSx = poGRider.executeQuery(lsSQL);
-                if (loRSx.next()){
-                    if (lsValue.isEmpty()){
-                        lsValue = loRSx.getString("sModelNme");
-                    } else {
-                        lsValue += " - " +loRSx.getString("sModelNme");
+                if (lsModelNme.isEmpty()){
+                    lsSQL = "SELECT sBrandNme FROM Brand WHERE sBrandIDx = " + SQLUtil.toSQL(gocas.PurchaseInfo().getBrandName());
+                    loRSx = poGRider.executeQuery(lsSQL);
+                    if (loRSx.next()){
+                        lsValue = loRSx.getString("sBrandNme");
                     }
+
+                    lsSQL = "SELECT sModelNme FROM MC_Model WHERE sModelIDx = " + SQLUtil.toSQL(gocas.PurchaseInfo().getModelID());
+                    loRSx = poGRider.executeQuery(lsSQL);
+                    if (loRSx.next()){
+                        if (lsValue.isEmpty()){
+                            lsValue = loRSx.getString("sModelNme");
+                        } else {
+                            lsValue += " - " +loRSx.getString("sModelNme");
+                        }
+                    }
+                    
+                    form.setField("brandModelName", lsValue);         
+                } else {
+                    form.setField("brandModelName", lsModelNme);
                 }
-                form.setField("brandModelName", lsValue);         
                 
                 //client type
                 form.setField("clientType", "Off");   
@@ -188,8 +206,32 @@ public class ExportGOCASForm {
                         break;
                 }
                 
+                //monthly amortization
+                if (lnMonAmort != 0.00){
+                    form.setField("monthlyAmortization", String.format("%,.2f", lnMonAmort)); 
+                }   
+                
+                //PN Value
+                if (lnPNValuex != 0.00){
+                    form.setField("pnValue", String.format("%,.2f", lnPNValuex)); 
+                }   
+                
+                //rebate
+                if (lnRebatexx != 0.00){
+                    form.setField("monthlyRebate", String.format("%,.2f", lnRebatexx)); 
+                }   
+                
+                //down payment
+                if (lnDownPaym != 0.00){
+                    form.setField("downPayment", String.format("%,.2f", lnDownPaym)); 
+                }  
+                
                 //term
-                form.setField("monthTerm", String.valueOf(gocas.PurchaseInfo().getAccountTerm()));   
+                if (lsTermName.isEmpty()){
+                    form.setField("monthTerm", String.valueOf(gocas.PurchaseInfo().getAccountTerm()));   
+                } else {
+                    form.setField("monthTerm", lsTermName);   
+                }
                 
                 //application date
                 lsValue = gocas.PurchaseInfo().getDateApplied(); //2025-07-31
@@ -398,7 +440,7 @@ public class ExportGOCASForm {
                 }
                 form.setField("barangay1", lsValue);
                 
-                if (!gocas.SpouseInfo().ResidenceInfo().PresentAddress().getTownCity().isEmpty()){
+                if (!gocas.ResidenceInfo().PresentAddress().getTownCity().isEmpty()){
                     lsSQL = "SELECT" +
                                 "  a.sTownName" +
                                 ", b.sProvName" +

@@ -48,50 +48,38 @@ public class ExportDeedOfSurrender {
         
         try {
             String lsSQL = "SELECT" +
-                            "  a.sClientNm" +
-                            ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
-                            ", a.sTransNox" +
-                            ", b.sAcctNmbr" +
-                        " FROM Credit_Online_Application a" +
-                            ", MC_AR_Contract_Info b" +
-                        " WHERE a.sTransNox = b. sReferNox" +
-                            " AND b.sTransNox = " + SQLUtil.toSQL(args[0]);
+                        "  a.sClientNm" +
+                        ", IFNULL(a.sCatInfox, a.sDetlInfo) sDetlInfo" +
+                        ", a.sTransNox" +
+                        ", c.sEngineNo" +
+                        ", c.sFrameNox" +
+                        ", b.sAcctNmbr" +
+                        ", b.nDownPaym" +
+                        ", b.nAcctTerm" +
+                        ", b.nMonAmort" +
+                        ", b.nRebatesx" +
+                        ", b.nPNValuex" +
+                        ", b.nPenaltyx" +
+                        ", IFNULL(b.dFirstPay, '') dFirstPay" +
+                        ", e.sBrandNme" +
+                        ", CONCAT(d.sModelNme, ' - ', d.sModelCde) sModelNme" +
+                        ", f.sColorNme" +
+                        ", IFNULL(b.sTransNox, '') xTransNox" +
+                        ", a.sClientNm" +
+                    " FROM Credit_Online_Application a" +
+                        " LEFT JOIN MC_AR_Contract_Info b ON a.sTransNox = b.sReferNox" +
+                        " LEFT JOIN MC_Serial c ON b.sSerialID = c.sSerialID" +
+                        " LEFT JOIN MC_Model d ON c.sModelIDx = d.sModelIDx" +
+                        " LEFT JOIN Brand e ON d.sBrandIDx = e.sBrandIDx" +
+                        " LEFT JOIN Color f ON c.sColorIDx = f.sColorIDx" +
+                    " WHERE b.sTransNox = " + SQLUtil.toSQL(args[0]);
 
             ResultSet loRS = poGRider.executeQuery(lsSQL);
 
             if (MiscUtil.RecordCount(loRS) <= 0) {
                 logwrapr.severe("No record found...");
                 System.exit(1);
-            }
- 
-            loRS.next();
-            lsSQL = "SELECT" +
-                        "  d.sBrandNme" +
-                        ", c.sModelNme" +
-                        ", b.sEngineNo" +
-                        ", b.sFrameNox" +
-                        ", e.sColorNme" +
-                        ", f.sLastName" +
-                        ", f.sFrstName" +
-                        ", f.sMiddName" +
-                        ", f.sSuffixNm" +
-                        ", a.sAcctNmbr" +
-                        ", f.sCompnyNm" +
-                    " FROM MC_AR_Master a" +
-                        " LEFT JOIN MC_Serial b ON a.sSerialID = b.sSerialID" +
-                        " LEFT JOIN MC_Model c ON b.sModelIDx = c.sModelIDx" +
-                        " LEFT JOIN Brand d ON c.sBrandIDx = d.sBrandIDx" +
-                        " LEFT JOIN Color e ON b.sColorIDx = e.sColorIDx" +
-                        ", Client_Master f" +
-                    " WHERE a.sClientID = f.sClientID" +
-                        " AND a.sAcctNmbr = " + SQLUtil.toSQL(loRS.getString("sAcctNmbr"));
-
-            loRS = poGRider.executeQuery(lsSQL);
-
-            if (MiscUtil.RecordCount(loRS) <= 0){
-                logwrapr.severe("No record found...");
-                System.exit(1);
-            }
+            }           
             
             if (loRS.next()){
                 // Load your template with form fields
@@ -107,20 +95,20 @@ public class ExportDeedOfSurrender {
                 
                 // Output PDF path
                 lsTemplate = lsTemplate + " - " + 
-                            loRS.getString("sCompnyNm").toUpperCase() + " - " +
+                            loRS.getString("sClientNm").toUpperCase() + " - " +
                             loRS.getString("sAcctNmbr");
                 PdfStamper stamper = new PdfStamper(reader, new FileOutputStream(path + "docusign/" + lsTemplate + ".pdf"));
                 
                 // Get the form fields
                 AcroFields form = stamper.getAcroFields();
                 
-                form.setField("DATE", SQLUtil.dateFormat(poGRider.getServerDate(), SQLUtil.FORMAT_LONG_DATE).toUpperCase());
+                form.setField("DATE", "");
                 form.setField("MAKE", loRS.getString("sBrandNme").toUpperCase());
                 form.setField("TYPE", loRS.getString("sModelNme").toUpperCase());
                 form.setField("ENGINE NO", loRS.getString("sEngineNo").toUpperCase());
                 form.setField("CHASSIS NO", loRS.getString("sFrameNox").toUpperCase());
                 form.setField("COLOR", loRS.getString("sColorNme").toUpperCase());
-                form.setField("COMPLETE NAME", loRS.getString("sCompnyNm").toUpperCase());
+                form.setField("COMPLETE NAME", loRS.getString("sClientNm").toUpperCase());
                 
                 // Set the form flattening to true to lock all fields
                 stamper.setFormFlattening(true); // <-- this locks the fields
