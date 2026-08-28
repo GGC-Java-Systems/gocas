@@ -131,9 +131,45 @@ public class ExportChattelMortgage {
                 
                 form.setField("buyerName", loRS.getString("sClientNm").toUpperCase());
                 form.setField("marriedTo", lsValue);
-                form.setField("buyerAddress", loRS.getString("sAddressx").toUpperCase());
-                form.setField("MORTGAGOR", loRS.getString("sCompnyNm").toUpperCase());
-                form.setField("COMAKER", loRS.getString("sCoMaker1").toUpperCase());
+                
+                //customer address                
+                lsValue = gocas.ResidenceInfo().PresentAddress().getHouseNo() + " ";
+                
+                if (!gocas.ResidenceInfo().PresentAddress().getAddress1().isEmpty()){
+                    lsValue += gocas.ResidenceInfo().PresentAddress().getAddress1() + " ";
+                }
+                
+                if (!gocas.ResidenceInfo().PresentAddress().getAddress2().isEmpty()){
+                    lsValue += gocas.ResidenceInfo().PresentAddress().getAddress2() + " ";
+                }
+                
+                if (!gocas.ResidenceInfo().PresentAddress().getBarangay().isEmpty()){
+                    lsSQL = "SELECT sBrgyName FROM Barangay WHERE sBrgyIDxx = " + SQLUtil.toSQL(gocas.ResidenceInfo().PresentAddress().getBarangay());
+                    ResultSet loRSx = poGRider.executeQuery(lsSQL);
+                    if (loRSx.next()){
+                        lsValue += ", " + loRSx.getString("sBrgyName");
+                    }
+                }
+                
+                if (!gocas.ResidenceInfo().PresentAddress().getTownCity().isEmpty()){
+                    lsSQL = "SELECT" +
+                                "  a.sTownName" +
+                                ", b.sProvName" +
+                            " FROM TownCity a" +
+                                ", Province b" +
+                            " WHERE a.sProvIDxx = b.sProvIDxx" +
+                                " AND a.sTownIDxx = " + SQLUtil.toSQL(gocas.ResidenceInfo().PresentAddress().getTownCity());
+                    ResultSet loRSx = poGRider.executeQuery(lsSQL);
+                    if (loRSx.next()){
+                        lsValue += ", " + loRSx.getString("sTownName");
+                        lsValue += ", " + loRSx.getString("sProvName");
+                    }
+                }
+                
+                form.setField("buyerAddress", lsValue.trim().toUpperCase());
+                
+                form.setField("MORTGAGOR", loRS.getString("sClientNm").toUpperCase());
+                //form.setField("COMAKER", loRS.getString("sCoMaker1").toUpperCase());
                 
                 // Set the form flattening to true to lock all fields
                 stamper.setFormFlattening(true); // <-- this locks the fields

@@ -7,7 +7,7 @@ public class testDownloadARContract {
 
         argx[0] = "IntegSys";
         argx[1] = "M001111122";
-        argx[2] = "M00125000084";
+        argx[2] = "VTR126000006";
         
         DownloadARContract.main(argx);
     }

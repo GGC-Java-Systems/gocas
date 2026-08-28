@@ -725,6 +725,7 @@ public class ExportGOCASForm {
                                 break;
                         }                        
                         
+                        System.out.println(gocas.MeansInfo().SelfEmployedInfo().getBusinessLength());
                         form.setField("yearsOfBusiness", String.valueOf(gocas.MeansInfo().SelfEmployedInfo().getBusinessLength()));
                         
                         form.setField("businessCapital", "Off");

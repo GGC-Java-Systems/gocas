@@ -193,7 +193,7 @@ public class MeansSelfEmployed implements JEntity{
      * @return applicant's business age (in years).
      */
     public String getBusinessLength(){
-        return (String) poJSON.get("nBusLenxx");  
+        return String.valueOf(poJSON.get("nBusLenxx"));  
     }
     
     /**
@@ -213,7 +213,7 @@ public class MeansSelfEmployed implements JEntity{
      * @return business income.
      */
     public String getIncome(){
-        return (String) poJSON.get("nBusIncom");  
+        return String.valueOf(poJSON.get("nBusIncom"));  
     }
     
     /**
@@ -233,7 +233,7 @@ public class MeansSelfEmployed implements JEntity{
      * @return business monthly expense.
      */
     public String getMonthlyExpense(){
-        return (String) poJSON.get("nMonExpns");  
+        return String.valueOf(poJSON.get("nMonExpns"));  
     }
     
     /**
