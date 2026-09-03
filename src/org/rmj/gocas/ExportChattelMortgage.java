@@ -18,6 +18,7 @@ import org.rmj.replication.utility.LogWrapper;
 
 public class ExportChattelMortgage {
     public static void main(String [] args){
+        
         LogWrapper logwrapr = new LogWrapper("DCP.ExportFile", "dcp.log");
 
         if (args.length != 1){
@@ -68,7 +69,8 @@ public class ExportChattelMortgage {
                                 ", CONCAT(d.sModelNme, ' - ', d.sModelCde) sModelNme" +
                                 ", f.sColorNme" +
                                 ", IFNULL(b.sTransNox, '') xTransNox" +
-                                ", a.sClientNm" +
+                                ", a.sClientNm " +
+                                ", IFNULL(a.sBranchCd, '') xBranch " +
                             " FROM Credit_Online_Application a" +
                                 " LEFT JOIN MC_AR_Contract_Info b ON a.sTransNox = b.sReferNox" +
                                 " LEFT JOIN MC_Serial c ON b.sSerialID = c.sSerialID" +
@@ -76,9 +78,9 @@ public class ExportChattelMortgage {
                                 " LEFT JOIN Brand e ON d.sBrandIDx = e.sBrandIDx" +
                                 " LEFT JOIN Color f ON c.sColorIDx = f.sColorIDx" +
                             " WHERE b.sTransNox = " + SQLUtil.toSQL(args[0]);
-
+            System.out.println("executeQuery : " + lsSQL);
             ResultSet loRS = poGRider.executeQuery(lsSQL);
-
+            
             if (MiscUtil.RecordCount(loRS) <= 0) {
                 logwrapr.severe("No record found...");
                 System.exit(1);
@@ -113,9 +115,37 @@ public class ExportChattelMortgage {
                 int day = date.getDayOfMonth();
                 String dayWithSuffix = day + getDaySuffix(day);
                 
-//                form.setField("day", dayWithSuffix.toUpperCase());
-//                form.setField("monthYear", monthName.toUpperCase() + " " + date.getYear());
+                form.setField("day", dayWithSuffix.toUpperCase());
+                form.setField("wDay", dayWithSuffix.toUpperCase());
+              
+                form.setField("monthYear", monthName.toUpperCase() + " " + date.getYear());
+                form.setField("wMonth", monthName.toUpperCase());
+                form.setField("wYear", String.valueOf(date.getYear()).substring(2));
+                
+                form.setField("date", monthName.toUpperCase() + " " + day + ", " + date.getYear());
+                String managerNme = "";
 
+                if (!loRS.getString("xBranch").isEmpty()) {
+                    lsSQL = "SELECT b.sClientID, "
+                            + "b.sCompnyNm AS Manager "
+                            + "FROM Employee_Master001 a "
+                            + "LEFT JOIN Client_Master b "
+                            + "ON a.sEmployID = b.sClientID "
+                            + "WHERE a.sBranchCD = "
+                            + SQLUtil.toSQL(loRS.getString("xBranch"))
+                            + " AND a.cManagerx = '1' "
+                            + "AND a.sPositnID = '310'";
+
+                    ResultSet loRSx = poGRider.executeQuery(lsSQL);
+
+                    if (loRSx.next()) {
+                        managerNme = loRSx.getString("Manager");
+                    }
+
+                    form.setField("branchHead", managerNme.toUpperCase());
+                }
+                
+                
                 GOCASApplication gocas = new GOCASApplication();
                 gocas.setData(loRS.getString("sDetlInfo"));
                 
@@ -169,7 +199,47 @@ public class ExportChattelMortgage {
                 form.setField("buyerAddress", lsValue.trim().toUpperCase());
                 
                 form.setField("MORTGAGOR", loRS.getString("sClientNm").toUpperCase());
-                //form.setField("COMAKER", loRS.getString("sCoMaker1").toUpperCase());
+                
+                
+                //Added by TEEJEI
+                
+                form.setField("term", String.valueOf(gocas.PurchaseInfo().getAccountTerm()));
+                form.setField("termText", numberToWords(gocas.PurchaseInfo().getAccountTerm()));
+                
+                String lsSelPrice = "";
+                double lnSelPrice = 0.00;
+
+                if (!gocas.PurchaseInfo().getModelID().isEmpty()) {
+                    lsSQL = "SELECT nSelPrice "
+                            + "FROM MC_Model_Price "
+                            + "WHERE sModelIDx = "
+                            + SQLUtil.toSQL(gocas.PurchaseInfo().getModelID());
+
+                    ResultSet loRSx = poGRider.executeQuery(lsSQL);
+
+                    if (loRSx.next()) {
+                        lnSelPrice = loRSx.getDouble("nSelPrice");
+
+                        lsSelPrice = String.format(
+                                "%,.2f",
+                                lnSelPrice
+                        );
+                    }
+                }
+                form.setField("amount", lsSelPrice);
+                form.setField("amountText", numberToWords((int) lnSelPrice));
+                String lsCoMaker = gocas.CoMakerInfo().getLastName() + ", "
+                        + gocas.CoMakerInfo().getFirstName();
+
+                if (!gocas.CoMakerInfo().getSuffixName().isEmpty()) {
+                    lsCoMaker += " " + gocas.CoMakerInfo().getSuffixName();
+                }
+
+                if (!gocas.CoMakerInfo().getMiddleName().isEmpty()) {
+                    lsCoMaker += " " + gocas.CoMakerInfo().getMiddleName();
+                }
+
+                form.setField("COMAKER", lsCoMaker.toUpperCase());
                 
                 // Set the form flattening to true to lock all fields
                 stamper.setFormFlattening(true); // <-- this locks the fields
@@ -203,4 +273,67 @@ public class ExportChattelMortgage {
             default: return "th";
         }
     }
+    
+    
+    /**
+     * Converts a numeric value into its corresponding English word
+     * representation.
+     *
+     * <p>
+     * This method supports positive and negative whole numbers up to 999,999.
+     * Values greater than 999,999 are returned as their numeric string
+     * representation.
+     * </p>
+     *
+     * @param number the numeric value to convert
+     * @return the English word representation of the given number
+     * @author TEEJEI DECELIS
+     */
+    public static String numberToWords(int number) {
+    if (number == 0) {
+        return "ZERO";
+    }
+
+    if (number < 0) {
+        return "MINUS " + numberToWords(Math.abs(number));
+    }
+
+    String[] ones = {
+        "", "ONE", "TWO", "THREE", "FOUR", "FIVE",
+        "SIX", "SEVEN", "EIGHT", "NINE", "TEN",
+        "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN",
+        "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN",
+        "NINETEEN"
+    };
+
+    String[] tens = {
+        "", "", "TWENTY", "THIRTY", "FORTY",
+        "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"
+    };
+
+    if (number < 20) {
+        return ones[number];
+    }
+
+    if (number < 100) {
+        return tens[number / 10]
+                + (number % 10 != 0 ? "-" + ones[number % 10] : "");
+    }
+
+    if (number < 1000) {
+        return ones[number / 100] + " HUNDRED"
+                + (number % 100 != 0
+                    ? " " + numberToWords(number % 100)
+                    : "");
+    }
+
+    if (number < 1000000) {
+        return numberToWords(number / 1000) + " THOUSAND"
+                + (number % 1000 != 0
+                    ? " " + numberToWords(number % 1000)
+                    : "");
+    }
+
+    return String.valueOf(number);
+}
 }

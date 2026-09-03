@@ -93,9 +93,9 @@ public class ExportGOCASForm {
                         " LEFT JOIN Brand e ON d.sBrandIDx = e.sBrandIDx" +
                         " LEFT JOIN Color f ON c.sColorIDx = f.sColorIDx" +
                     " WHERE b.sTransNox = " + SQLUtil.toSQL(lsSQL);
-
+            System.out.print("to get rebate : " + lsSQL);
             loRS = poGRider.executeQuery(lsSQL);
-
+            
             if (MiscUtil.RecordCount(loRS) <= 0){
                 logwrapr.severe("No record found...");
                 System.exit(1);
@@ -118,6 +118,7 @@ public class ExportGOCASForm {
                     lnPNValuex = loRS.getDouble("nPNValuex");
                 }
                 
+                System.out.print("rebate : " + lnRebatexx);
                 GOCASApplication gocas = new GOCASApplication();
                 gocas.setData(loRS.getString("sDetlInfo"));
                 
@@ -461,6 +462,8 @@ public class ExportGOCASForm {
                     gocas.ResidenceInfo().PresentAddress().getTownCity().equals(gocas.ResidenceInfo().PermanentAddress().getTownCity())){
                     form.setField("checkSameAsPresentAddress", "Yes");
                 } else {
+                    form.setField("checkSameAsPresentAddress", "No");
+                }
                     form.setField("houseNo2", gocas.ResidenceInfo().PermanentAddress().getHouseNo());
                 
                     lsValue = "";
@@ -499,7 +502,7 @@ public class ExportGOCASForm {
                             form.setField("province2", loRSx.getString("sProvName"));
                         }
                     }
-                }
+                
                 
                 //properties
                 form.setField("check4Wheels", gocas.DisbursementInfo().PropertiesInfo().Has4Wheels().equals("1") ? "Yes" : "No");

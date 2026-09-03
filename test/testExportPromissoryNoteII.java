@@ -1,12 +1,12 @@
 
-import org.rmj.gocas.ExportDeedOfSurrender;
+import org.rmj.gocas.ExportPromissoryNoteII;
 
-public class testExportDeedOfSurrender {
+public class testExportPromissoryNoteII {
     public static void main(String[] args) {
         String [] arg = new String[1];
         
         arg[0] = "VTR126000001";
         
-        ExportDeedOfSurrender.main(arg);
+        ExportPromissoryNoteII.main(arg);
     }
 }

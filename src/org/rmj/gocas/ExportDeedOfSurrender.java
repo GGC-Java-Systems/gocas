@@ -11,9 +11,10 @@ import java.sql.SQLException;
 import org.rmj.appdriver.MiscUtil;
 import org.rmj.appdriver.SQLUtil;
 import org.rmj.appdriver.agent.GRiderX;
+import static org.rmj.gocas.ExportChattelMortgage.numberToWords;
 import org.rmj.replication.utility.LogWrapper;
 
-public class ExportDeedOfSurrender {
+    public class ExportDeedOfSurrender {
     public static void main(String [] args){
         LogWrapper logwrapr = new LogWrapper("DCP.ExportFile", "dcp.log");
 
@@ -105,10 +106,36 @@ public class ExportDeedOfSurrender {
                 form.setField("DATE", "");
                 form.setField("MAKE", loRS.getString("sBrandNme").toUpperCase());
                 form.setField("TYPE", loRS.getString("sModelNme").toUpperCase());
-                form.setField("ENGINE NO", loRS.getString("sEngineNo").toUpperCase());
-                form.setField("CHASSIS NO", loRS.getString("sFrameNox").toUpperCase());
+                form.setField("ENGINENO", loRS.getString("sEngineNo").toUpperCase());
+                form.setField("CHASSISNO", loRS.getString("sFrameNox").toUpperCase());
                 form.setField("COLOR", loRS.getString("sColorNme").toUpperCase());
-                form.setField("COMPLETE NAME", loRS.getString("sClientNm").toUpperCase());
+                form.setField("COMPLETENAME", loRS.getString("sClientNm").toUpperCase());
+                
+                GOCASApplication gocas = new GOCASApplication();
+                gocas.setData(loRS.getString("sDetlInfo"));
+                
+                String lsSelPrice = "";
+                double lnSelPrice = 0.00;
+
+                if (!gocas.PurchaseInfo().getModelID().isEmpty()) {
+                    lsSQL = "SELECT nSelPrice "
+                            + "FROM MC_Model_Price "
+                            + "WHERE sModelIDx = "
+                            + SQLUtil.toSQL(gocas.PurchaseInfo().getModelID());
+
+                    ResultSet loRSx = poGRider.executeQuery(lsSQL);
+
+                    if (loRSx.next()) {
+                        lnSelPrice = loRSx.getDouble("nSelPrice");
+
+                        lsSelPrice = String.format(
+                                "%,.2f",
+                                lnSelPrice
+                        );
+                    }
+                }
+                form.setField("amount", lsSelPrice);
+                form.setField("amountText", numberToWords((int) lnSelPrice));
                 
                 // Set the form flattening to true to lock all fields
                 stamper.setFormFlattening(true); // <-- this locks the fields
@@ -130,4 +157,65 @@ public class ExportDeedOfSurrender {
         System.out.println("File exported successfully.");
         System.exit(0);
     }
+    /**
+     * Converts a numeric value into its corresponding English word
+     * representation.
+     *
+     * <p>
+     * This method supports positive and negative whole numbers up to 999,999.
+     * Values greater than 999,999 are returned as their numeric string
+     * representation.
+     * </p>
+     *
+     * @param number the numeric value to convert
+     * @return the English word representation of the given number
+     * @author TEEJEI DECELIS
+     */
+    public static String numberToWords(int number) {
+    if (number == 0) {
+        return "ZERO";
+    }
+
+    if (number < 0) {
+        return "MINUS " + numberToWords(Math.abs(number));
+    }
+
+    String[] ones = {
+        "", "ONE", "TWO", "THREE", "FOUR", "FIVE",
+        "SIX", "SEVEN", "EIGHT", "NINE", "TEN",
+        "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN",
+        "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN",
+        "NINETEEN"
+    };
+
+    String[] tens = {
+        "", "", "TWENTY", "THIRTY", "FORTY",
+        "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"
+    };
+
+    if (number < 20) {
+        return ones[number];
+    }
+
+    if (number < 100) {
+        return tens[number / 10]
+                + (number % 10 != 0 ? "-" + ones[number % 10] : "");
+    }
+
+    if (number < 1000) {
+        return ones[number / 100] + " HUNDRED"
+                + (number % 100 != 0
+                    ? " " + numberToWords(number % 100)
+                    : "");
+    }
+
+    if (number < 1000000) {
+        return numberToWords(number / 1000) + " THOUSAND"
+                + (number % 1000 != 0
+                    ? " " + numberToWords(number % 1000)
+                    : "");
+    }
+
+    return String.valueOf(number);
+}
 }

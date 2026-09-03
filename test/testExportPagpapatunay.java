@@ -1,12 +1,12 @@
 
-import org.rmj.gocas.ExportDeedOfSurrender;
+import org.rmj.gocas.ExportPagpapatunay;
 
-public class testExportDeedOfSurrender {
+public class testExportPagpapatunay {
     public static void main(String[] args) {
         String [] arg = new String[1];
         
         arg[0] = "VTR126000001";
         
-        ExportDeedOfSurrender.main(arg);
+        ExportPagpapatunay.main(arg);
     }
 }
